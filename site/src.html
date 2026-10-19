@@ -1,0 +1,284 @@
+<title>Tiny Explorer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Tiny Explorer: learning songs and interactive cartoons for toddlers and preschoolers, starring Bobo the little explorer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;600;800&display=swap">
+<style>
+/* Layout: one sunny storybook landscape — sky at the top, rolling hills at the bottom, content as signposts along the walk. Single deliberate light look. */
+:root{
+  --sky-top:#6ec8ff; --sky-low:#dcf5ff;
+  --hill:#9be15d; --hill-deep:#6fcf4a;
+  --bobo:#ff8c42; --bobo-deep:#e8661a;
+  --ink:#2d2340; --ink-soft:#5b5070;
+  --paper:#ffffff; --cream:#fff8ec;
+  --c1:#ff595e; --c2:#ff924c; --c3:#ffca3a; --c4:#8ac926; --c5:#2ec4b6; --c6:#1982c4; --c7:#4267ac; --c8:#8b5cf6; --c9:#f15bb5; --c10:#00bbf9;
+  --display:"Baloo 2","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --body:"Nunito","Segoe UI",system-ui,sans-serif;
+  --r:22px; --line:3px solid var(--ink);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--sky-low);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:inherit}
+:focus-visible{outline:3px dashed var(--c6);outline-offset:3px;border-radius:8px}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);line-height:1.08;margin:0;text-wrap:balance}
+h2{font-size:clamp(2rem,4.5vw,2.9rem);font-weight:800}
+h3{font-size:1.3rem;font-weight:800}
+p{margin:0}
+
+/* nav */
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(255,255,255,.88);backdrop-filter:blur(8px);border-bottom:var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--paper)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:10px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--display);font-weight:800;font-size:1.35rem}
+.logo img{width:42px;height:42px}
+.navlinks{display:flex;gap:18px;font-weight:800;font-size:.95rem}
+.navlinks a{text-decoration:none}
+.navlinks a:hover{color:var(--bobo-deep)}
+@media (max-width:640px){.navlinks{display:none}}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:1.1rem;text-decoration:none;padding:12px 22px;border:var(--line);border-radius:999px;box-shadow:0 5px 0 var(--ink);transition:transform .15s,box-shadow .15s;background:var(--paper)}
+.btn:hover{transform:translateY(2px);box-shadow:0 3px 0 var(--ink)}
+.btn:active{transform:translateY(5px);box-shadow:0 0 0 var(--ink)}
+.btn.yt{background:var(--c1);color:var(--paper)}
+.btn.sm{font-size:.95rem;padding:8px 16px;box-shadow:0 4px 0 var(--ink)}
+.btn svg{width:22px;height:22px;flex:none}
+
+/* hero */
+.hero{background:linear-gradient(var(--sky-top),var(--sky-low) 78%);position:relative;overflow:hidden}
+.hero .wrap{display:grid;grid-template-columns:1.15fr .85fr;gap:24px;align-items:center;padding-block:48px 120px;position:relative;z-index:2}
+.cloud{position:absolute;background:var(--paper);border-radius:999px;opacity:.95;z-index:1}
+.cloud::before,.cloud::after{content:"";position:absolute;background:var(--paper);border-radius:50%}
+.cloud::before{width:55%;height:170%;left:14%;bottom:20%}
+.cloud::after{width:40%;height:130%;right:12%;bottom:25%}
+.cl1{width:160px;height:44px;top:46px;left:6%;animation:drift 38s linear infinite}
+.cl2{width:110px;height:32px;top:120px;right:10%;animation:drift 50s linear infinite reverse}
+.cl3{width:90px;height:26px;top:300px;left:48%;animation:drift 44s linear infinite}
+@keyframes drift{0%{transform:translateX(0)}50%{transform:translateX(60px)}100%{transform:translateX(0)}}
+.eyebrow{display:inline-block;background:var(--paper);border:var(--line);border-radius:999px;padding:4px 14px;font-weight:800;font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:16px}
+.title{font-size:clamp(3.2rem,9vw,6.2rem);font-weight:800;letter-spacing:-.01em;-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;text-shadow:0 6px 0 var(--ink)}
+.title span{display:inline-block;animation:hop 2.4s ease-in-out infinite}
+.title .sp{width:.3em}
+@keyframes hop{0%,70%,100%{transform:translateY(0)}35%{transform:translateY(-8px)}}
+.lede{font-size:1.2rem;max-width:34ch;margin-top:18px;font-weight:600}
+.cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:28px}
+.bobo-stage{position:relative;display:grid;place-items:center}
+.bobo-stage img{width:min(380px,100%);animation:bounce 1s ease-in-out infinite;transform-origin:bottom center}
+@keyframes bounce{0%,100%{transform:translateY(0) scale(1.03,.97)}50%{transform:translateY(-16px) scale(1,1)}}
+.bubble{position:absolute;top:-6px;left:0;background:var(--paper);border:var(--line);border-radius:20px;padding:10px 14px;font-family:var(--display);font-weight:800;font-size:1.05rem;max-width:200px;line-height:1.2}
+.bubble::after{content:"";position:absolute;bottom:-14px;right:36px;border:7px solid transparent;border-top-color:var(--ink);border-width:14px 10px 0}
+.hills{position:absolute;left:0;right:0;bottom:-2px;height:120px;z-index:1}
+.hills svg{width:100%;height:100%;display:block}
+
+/* ground band */
+.ground{background:var(--hill-deep);border-top:var(--line)}
+.ground .wrap{padding-block:22px;display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:center;color:var(--ink);font-weight:800}
+.ground .chip{display:flex;align-items:center;gap:8px}
+.dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--ink);flex:none}
+
+section{padding-block:72px}
+.sec-head{max-width:620px;margin-bottom:36px}
+.sec-head p{margin-top:12px;color:var(--ink-soft);font-size:1.1rem}
+
+/* skills */
+.skills{background:var(--cream)}
+.skill-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px}
+.skill{background:var(--paper);border:var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.skill .badge{width:54px;height:54px;border-radius:50%;border:var(--line);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--paper);-webkit-text-stroke:1.5px var(--ink);paint-order:stroke fill}
+.skill p{color:var(--ink-soft);font-size:.98rem}
+
+/* video */
+.latest .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:36px;align-items:center}
+.vid{display:block;position:relative;border:var(--line);border-radius:var(--r);overflow:hidden;box-shadow:0 8px 0 var(--ink);text-decoration:none;transition:transform .15s}
+.vid:hover{transform:translateY(3px) rotate(-.4deg)}
+.vid .play{position:absolute;inset:0;display:grid;place-items:center}
+.vid .play span{width:84px;height:84px;border-radius:50%;background:var(--c1);border:var(--line);display:grid;place-items:center;box-shadow:0 5px 0 var(--ink)}
+.vid .play svg{width:34px;height:34px;margin-left:6px}
+.count-row{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 22px}
+.count-row span{width:40px;height:40px;border-radius:50%;border:2.5px solid var(--ink);display:grid;place-items:center;font-family:var(--display);font-weight:800;color:var(--paper);-webkit-text-stroke:1px var(--ink);paint-order:stroke fill;font-size:1.15rem}
+.meta{color:var(--ink-soft);font-weight:600}
+
+/* steps */
+.how{background:var(--paper);border-block:var(--line)}
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:14px;position:relative}
+.steps::before{content:"";position:absolute;top:34px;left:8%;right:8%;border-top:3px dashed var(--ink);z-index:0}
+.steps li{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;min-width:0}
+.stop{width:68px;height:68px;border-radius:50%;border:var(--line);background:var(--c3);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:1.6rem}
+.steps h3{font-size:1.15rem}
+.steps p{font-size:.92rem;color:var(--ink-soft)}
+@media (max-width:820px){.steps{grid-template-columns:1fr;gap:18px}.steps::before{top:0;bottom:0;left:34px;right:auto;border-top:0;border-left:3px dashed var(--ink)}.steps li{flex-direction:row;text-align:left;align-items:flex-start;gap:16px}.stop{flex:none}}
+
+/* topics */
+.topics{display:flex;flex-wrap:wrap;gap:12px}
+.topic{border:var(--line);border-radius:999px;padding:8px 18px;font-weight:800;background:var(--paper)}
+.topic.done{background:var(--hill);}
+.topic small{font-weight:600;color:var(--ink-soft)}
+
+/* parents */
+.parents{background:var(--bobo)}
+.parents .wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+.promise{background:var(--cream);border:var(--line);border-radius:var(--r);padding:24px;display:flex;flex-direction:column;gap:8px}
+.parents h2{grid-column:1/-1;color:var(--paper);-webkit-text-stroke:2.5px var(--ink);paint-order:stroke fill;text-shadow:0 5px 0 var(--ink)}
+
+/* footer */
+footer{background:var(--ink);color:var(--cream)}
+footer .wrap{padding-block:48px 36px;display:flex;flex-wrap:wrap;gap:24px;align-items:center;justify-content:space-between}
+footer .big{font-family:var(--display);font-weight:800;font-size:1.8rem}
+footer .links{display:flex;flex-wrap:wrap;gap:12px}
+footer .btn{color:var(--ink)}
+footer .fine{flex-basis:100%;font-size:.85rem;opacity:.75;border-top:1px solid rgba(255,248,236,.25);padding-top:18px}
+
+@media (max-width:820px){
+  .hero .wrap{grid-template-columns:1fr;padding-block:36px 110px;text-align:left}
+  .bobo-stage img{width:min(280px,80%)}
+  .latest .wrap{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#top"><img src="{{BOBO}}" alt="">Tiny Explorer</a>
+    <div class="navlinks"><a href="#learn">What kids learn</a><a href="#watch">Watch</a><a href="#how">How it works</a><a href="#parents">For parents</a></div>
+    <a class="btn yt sm" href="https://www.youtube.com/channel/UCKHG5cXxTH_t4v_SsC1veeQ?sub_confirmation=1" target="_blank" rel="noopener">Subscribe</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="cloud cl1"></div><div class="cloud cl2"></div><div class="cloud cl3"></div>
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">Songs · Counting · Learning · Ages 1–5</span>
+      <h1 class="title" aria-label="Tiny Explorer"></h1>
+      <p class="lede">Learning songs and cartoons where your little one doesn't just watch. Bobo asks, waits, and cheers, so kids think, talk and sing along.</p>
+      <div class="cta">
+        <a class="btn yt" href="https://www.youtube.com/channel/UCKHG5cXxTH_t4v_SsC1veeQ?sub_confirmation=1" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="#ffffff"><path d="M8 5v14l11-7z"/></svg>Watch on YouTube</a>
+        <a class="btn" href="#learn">See what kids learn</a>
+      </div>
+    </div>
+    <div class="bobo-stage">
+      <div class="bubble">Hi! I'm Bobo. Let's explore!</div>
+      <img src="{{BOBO}}" alt="Bobo, an orange cartoon explorer with a safari hat and magnifying glass" width="451" height="455">
+    </div>
+  </div>
+  <div class="hills" aria-hidden="true">
+    <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
+      <path d="M0 70 C 240 10, 480 10, 720 60 S 1200 110, 1440 40 L1440 120 L0 120Z" fill="#9be15d" stroke="#2d2340" stroke-width="3"/>
+      <path d="M0 100 C 300 50, 700 60, 1000 95 S 1300 100, 1440 80 L1440 120 L0 120Z" fill="#6fcf4a" stroke="#2d2340" stroke-width="3"/>
+    </svg>
+  </div>
+</header>
+
+<div class="ground">
+  <div class="wrap">
+    <span class="chip"><span class="dot" style="background:var(--c3)"></span>New video every day</span>
+    <span class="chip"><span class="dot" style="background:var(--c5)"></span>Original music</span>
+    <span class="chip"><span class="dot" style="background:var(--c9)"></span>No scary or loud content</span>
+    <span class="chip"><span class="dot" style="background:var(--c6)"></span>English &amp; Hindi</span>
+  </div>
+</div>
+
+<section class="skills" id="learn">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>What your child builds with Bobo</h2>
+      <p>Every episode is built around one early-years skill, with a question break so kids answer out loud.</p>
+    </div>
+    <div class="skill-grid">
+      <article class="skill"><span class="badge" style="background:var(--c1)">1</span><h3>Numbers &amp; counting</h3><p>Counting real objects, number words, and counting together to 10, then 20.</p></article>
+      <article class="skill"><span class="badge" style="background:var(--c4)">A</span><h3>Letters &amp; words</h3><p>ABCs, first words and phonics with big, clear on-screen labels.</p></article>
+      <article class="skill"><span class="badge" style="background:var(--c6)">?</span><h3>Curiosity</h3><p>"What colour is this?" A short pause gives kids time to think and shout the answer.</p></article>
+      <article class="skill"><span class="badge" style="background:var(--c9)">♥</span><h3>Kindness &amp; friends</h3><p>Waving hello, sharing and taking turns, practised in every video.</p></article>
+      <article class="skill"><span class="badge" style="background:var(--c2)">✦</span><h3>The world around them</h3><p>Animals, colours, shapes, weather, feelings and everyday things.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="latest" id="watch">
+  <div class="wrap">
+    <a class="vid" href="https://www.youtube.com/channel/UCKHG5cXxTH_t4v_SsC1veeQ" target="_blank" rel="noopener" aria-label="Watch Count 1 to 10 on YouTube">
+      <img src="{{THUMB}}" alt="Thumbnail: COUNT 1 to 10 with Bobo, a star, an apple, a duck and a heart" width="1280" height="720">
+      <span class="play"><span><svg viewBox="0 0 24 24" fill="#ffffff"><path d="M6 4v16l14-8z"/></svg></span></span>
+    </a>
+    <div>
+      <span class="eyebrow">Latest episode</span>
+      <h2>Count 1 to 10 with Bobo</h2>
+      <div class="count-row" aria-hidden="true"></div>
+      <p class="meta">One sun, two ducks, three fish… all the way to ten happy hearts. Each one pops in with its number, then everyone counts together.</p>
+      <div class="cta"><a class="btn yt" href="https://www.youtube.com/channel/UCKHG5cXxTH_t4v_SsC1veeQ" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="#ffffff"><path d="M8 5v14l11-7z"/></svg>Watch now</a></div>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>The trail every episode follows</h2>
+      <p>The same five stops each time, so little ones know what's coming and feel confident joining in.</p>
+    </div>
+    <ol class="steps">
+      <li><span class="stop" style="background:var(--c3)">1</span><div><h3>Hello!</h3><p>Bobo pops up and says hi.</p></div></li>
+      <li><span class="stop" style="background:var(--c5)">2</span><div><h3>Learn</h3><p>Things pop in one by one with big labels.</p></div></li>
+      <li><span class="stop" style="background:var(--c10)">3</span><div><h3>Guess</h3><p>A question, a countdown, then the answer.</p></div></li>
+      <li><span class="stop" style="background:var(--c9)">4</span><div><h3>Be kind</h3><p>Wave hello, share, help a friend.</p></div></li>
+      <li><span class="stop" style="background:var(--c4)">5</span><div><h3>Yay!</h3><p>A quick recap and a confetti cheer.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<section id="next">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Where Bobo is exploring next</h2>
+      <p>A new adventure lands on the channel every evening.</p>
+    </div>
+    <div class="topics">
+      <span class="topic done">Count 1 to 10 <small>out now</small></span>
+      <span class="topic">Colours song</span><span class="topic">Shapes song</span><span class="topic">Animal sounds</span>
+      <span class="topic">Numbers 1–20</span><span class="topic">ABC A–M</span><span class="topic">ABC N–Z</span>
+      <span class="topic">Fruits</span><span class="topic">Vehicles</span><span class="topic">Body parts</span>
+      <span class="topic">Days of the week</span><span class="topic">Opposites</span><span class="topic">Sea animals</span>
+      <span class="topic">Feelings</span><span class="topic">Ginti 1 se 10</span>
+    </div>
+  </div>
+</section>
+
+<section class="parents" id="parents">
+  <div class="wrap">
+    <h2>A promise to parents</h2>
+    <div class="promise"><h3>Calm and safe</h3><p>Bright colours, gentle pacing, no jump scares, no shouting, no ads made to look like content.</p></div>
+    <div class="promise"><h3>Made to be joined in</h3><p>Pauses for answers and sing-along moments turn screen time into talking time. Watch together and answer with them.</p></div>
+    <div class="promise"><h3>Short and sweet</h3><p>Episodes run 2–3 minutes, easy to fit between meals, baths and bedtime.</p></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <div class="big">Learn, Talk, Explore!</div>
+      <p>Follow Bobo's adventures on YouTube and Instagram.</p>
+    </div>
+    <div class="links">
+      <a class="btn yt sm" href="https://www.youtube.com/channel/UCKHG5cXxTH_t4v_SsC1veeQ?sub_confirmation=1" target="_blank" rel="noopener">YouTube</a>
+      <a class="btn sm" href="https://www.instagram.com/tiny.explorers52/" target="_blank" rel="noopener">Instagram @tiny.explorers52</a>
+    </div>
+    <p class="fine">© 2026 Tiny Explorer. Bobo and all songs are original works.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var cols=["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)","var(--c6)","var(--c7)","var(--c8)","var(--c9)","var(--c10)"];
+  var h=document.querySelector(".title"),t="Tiny Explorer",k=0;
+  for(var i=0;i<t.length;i++){var s=document.createElement("span");s.setAttribute("aria-hidden","true");
+    if(t[i]===" "){s.className="sp";s.innerHTML="&nbsp;"}else{s.textContent=t[i];s.style.color=cols[k%10];s.style.animationDelay=(k*0.09)+"s";k++}
+    h.appendChild(s)}
+  var row=document.querySelector(".count-row");
+  for(var n=1;n<=10;n++){var c=document.createElement("span");c.textContent=n;c.style.background=cols[n-1];row.appendChild(c)}
+})();
+</script>
