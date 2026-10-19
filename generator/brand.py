@@ -1,14 +1,15 @@
 """Tiny Explorer branded intro (3.5s) + branded thumbnail; joins intro onto the counting video."""
-import math, subprocess, sys
+import math, os, subprocess, sys
 import numpy as np
 from PIL import Image, ImageDraw
 from scipy.io import wavfile
 
-sys.path.insert(0, "/home/claude/counting")
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
 import make_video as mv
 from make_video import ell, poly, line, text, font, DRAW, NUM_COLORS, INK, P, S, W, H, FPS, ease_out_back, clamp01
 
-src = open("/home/claude/counting/make_banner.py").read()
+src = open(os.path.join(HERE, "make_banner.py")).read()
 start = src.index("def explorer(")
 end = src.index("explorer(d, 700, 790, 130)")
 ns = dict(mv.__dict__)
@@ -16,7 +17,7 @@ ns.update(dict(math=math))
 exec(src[start:end], ns)
 explorer = ns["explorer"]
 
-OUT = "/home/claude/counting"
+OUT = os.path.join(os.path.dirname(HERE), "videos")
 DUR = 3.5
 BG = mv.make_bg()
 

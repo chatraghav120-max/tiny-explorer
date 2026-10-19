@@ -1,5 +1,7 @@
-import math, sys
-sys.path.insert(0, "/home/claude/counting")
+import math, os, sys
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+BRAND = os.path.join(os.path.dirname(HERE), "brand")
 import numpy as np
 from PIL import Image, ImageDraw
 import make_video as mv
@@ -78,12 +80,12 @@ d.rounded_rectangle([P(1405 - sw / 2 - 40), P(780), P(1405 + sw / 2 + 40), P(860
 text(d, 1405, 822, sub, 46, "#ff6b35", stroke=0)
 
 out = img.reduce(S)
-out.save("/home/claude/counting/tiny_explorer_banner.png")
+out.save(os.path.join(BRAND, "tiny_explorer_banner.png"))
 # preview with safe-area guide (not for upload)
 pv = out.copy().resize((1280, 720))
 pd = ImageDraw.Draw(pv)
 pd.rectangle([c // 2 for c in SAFE], outline="red", width=2)
-pv.save("/home/claude/counting/banner_preview.png")
+pv.save(os.path.join(BRAND, "banner_preview.png"))
 
 # ---- channel picture 800x800 (YouTube crops to a circle) ----
 PS = 800
@@ -102,7 +104,7 @@ ell(pd, 400, 760, 520, 190, "#6fcf4a", ow=6)
 for x, y, s_ in [(170, 230, 26), (640, 200, 22), (650, 470, 18)]:
     poly(pd, mv.star_pts(x, y, s_, s_ * 0.45, 0), "#ffffff", ow=4)
 explorer(pd, 360, 470, 175)
-pimg.reduce(S).save("/home/claude/counting/tiny_explorer_profile.png")
+pimg.reduce(S).save(os.path.join(BRAND, "tiny_explorer_profile.png"))
 pv = pimg.reduce(S).resize((400, 400))
 m = Image.new("L", (400, 400), 0); ImageDraw.Draw(m).ellipse([0, 0, 399, 399], fill=255)
-c = Image.new("RGB", (400, 400), "white"); c.paste(pv, (0, 0), m); c.save("/home/claude/counting/profile_preview.png")
+c = Image.new("RGB", (400, 400), "white"); c.paste(pv, (0, 0), m); c.save(os.path.join(BRAND, "profile_preview.png"))
