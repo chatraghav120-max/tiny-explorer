@@ -172,13 +172,16 @@ def mouth(d, cx, cy, r, mood, talk, t):
         ell(d, cx, cy + hgt * 1.4 * r, 0.1 * r, 0.05 * r, "#ff8fab", ow=0)
 
 
-def bobo(d, cx, cy, r, t, mood="happy", talk=False, wave=False, hop=True, look=0.0, glass=False, hold=None):
+def bobo(d, cx, cy, r, t, mood="happy", talk=False, wave=False, hop=True, look=0.0, glass=False, hold=None,
+         hat=True, squash=0.0, lift=0.0):
     amp = (40 if mood == "excited" else 20) if hop else 0
-    hh = hop_at(t, amp)
+    hh = hop_at(t, amp) + lift
     y = cy - hh
-    sq = (1 - hh / max(amp, 1)) * 0.07 if hop else 0
+    sq = (1 - min(hh, amp) / max(amp, 1)) * 0.07 if hop else 0
+    sq += squash
     sx, sy = 1 + sq, 1 - sq
-    ell(d, cx, cy + r * 0.98, r * (0.9 - 0.25 * hh / max(amp, 1)), r * 0.14, (40, 90, 40), ow=0)
+    y += r * squash * 0.9
+    ell(d, cx, cy + r * 0.98, r * (0.9 - 0.25 * min(hh, max(amp, 1)) / max(amp, 1)) * (1 - 0.5 * min(lift / (r * 1.5), 1)), r * 0.14, (40, 90, 40), ow=0)
     ell(d, cx - 0.4 * r, y + 0.9 * r, r * 0.3, r * 0.16, "#e86a1c")
     ell(d, cx + 0.4 * r, y + 0.9 * r, r * 0.3, r * 0.16, "#e86a1c")
     # arms
@@ -198,12 +201,8 @@ def bobo(d, cx, cy, r, t, mood="happy", talk=False, wave=False, hop=True, look=0
     ell(d, cx - 0.6 * r, y + 0.08 * r, 0.12 * r, 0.07 * r, "#ff6f91", ow=0)
     ell(d, cx + 0.6 * r, y + 0.08 * r, 0.12 * r, 0.07 * r, "#ff6f91", ow=0)
     mouth(d, cx, y, r, mood, talk, t)
-    # hat
-    hy = y - r * sy * 0.93
-    ell(d, cx, hy + 10 * U(), r * 0.95, r * 0.2, "#c8963e")
-    d.chord([P(cx - r * 0.58), P(hy - r * 0.62), P(cx + r * 0.58), P(hy + r * 0.5)], 180, 360, fill="#e0b25c", outline=INK, width=int(P(5)))
-    d.rectangle([P(cx - r * 0.57), P(hy - 0.12 * r), P(cx + r * 0.57), P(hy - 0.015 * r)], fill="#8a5a2b")
-    ell(d, cx, hy - 0.35 * r, 0.075 * r, 0.075 * r, "#8a5a2b", ow=0)
+    if hat:
+        draw_hat(d, cx, y - r * sy * 0.93, r)
     if glass:
         gx, gy = cx + r * 1.25, y - r * 0.25
         line(d, [(cx + r * 0.95, y + r * 0.25), (gx - 0.23 * r, gy + 0.3 * r)], fill=INK, w=0.18 * r)
@@ -214,6 +213,20 @@ def bobo(d, cx, cy, r, t, mood="happy", talk=False, wave=False, hop=True, look=0
         hx, hy2 = cx + r * 1.05, y + r * 0.1
         DRAW[hold](d, hx, hy2, r * 0.32, t, 0)
         ell(d, cx + r * 0.85, y + r * 0.25, r * 0.15, r * 0.15, "#ff8c42")
+
+
+def draw_hat(d, cx, hy, r, ang=0.0):
+    """Bobo's explorer hat; hy is the brim line, r is Bobo's radius. ang tilts it (radians)."""
+    if abs(ang) > 0.01:
+        layer = Image.new("RGBA", (int(P(r * 3)), int(P(r * 3))), (0, 0, 0, 0))
+        draw_hat(ImageDraw.Draw(layer), r * 1.5, r * 1.6, r)
+        layer = layer.rotate(math.degrees(-ang), resample=Image.BICUBIC)
+        d._image.paste(layer, (int(P(cx - r * 1.5)), int(P(hy - r * 1.6))), layer)
+        return
+    ell(d, cx, hy + 10 * U(), r * 0.95, r * 0.2, "#c8963e")
+    d.chord([P(cx - r * 0.58), P(hy - r * 0.62), P(cx + r * 0.58), P(hy + r * 0.5)], 180, 360, fill="#e0b25c", outline=INK, width=int(P(5)))
+    d.rectangle([P(cx - r * 0.57), P(hy - 0.12 * r), P(cx + r * 0.57), P(hy - 0.015 * r)], fill="#8a5a2b")
+    ell(d, cx, hy - 0.35 * r, 0.075 * r, 0.075 * r, "#8a5a2b", ow=0)
 
 
 def pip(d, cx, cy, r, t, mood="happy", talk=False, hop=True, look=0.0, flap=False):
@@ -370,6 +383,8 @@ def beat_len(b):
         return b.get("dur", 6.0)
     if k == "bye":
         return b.get("dur", 5.0)
+    if k == "gag":
+        return b.get("dur", GAG_DUR[b["gag"]])
     return b.get("dur", 3.0)
 
 
@@ -740,6 +755,8 @@ def make_audio(path, tl, total, intro, seed=3):
             ph = 2 * np.pi * np.cumsum(500 + 500 * tt / 1.8) / SR
             add(np.sin(ph) * 0.06 * np.exp(-tt), t0 + 0.8)
             add(cheer(), t0 + 2.6); add(bell(mtof(84)), t0 + 3.4)
+        elif k == "gag":
+            gag_sfx(add, b, t0, tone, mtof, boing, pop, bell)
         elif k == "bye":
             for i, m in enumerate([72, 76, 79, 84, 88, 91, 96]):
                 add(tone(mtof(m), 0.6, 5, 0.13), t0 + i * 0.07)
@@ -809,6 +826,228 @@ def build(ep_path, out_mp4, beats=None, vertical=False, intro=True, stills=None)
     os.remove(wav)
     return total
 
+
+
+# ----------------------------------------------------------------- funny gags (no lesson, just giggles)
+# Beat: {"type": "gag", "gag": "bonk"|"sneeze"|"peekaboo"|"hiccup"|"bubble", "caption": "...", "punch": "...", "after": "..."}
+GAG_DUR = {"bonk": 7.0, "sneeze": 8.0, "peekaboo": 7.0, "hiccup": 8.5, "bubble": 7.5}
+
+
+def burst(d, x, y, word, lt, t0, px=None, fill="#ffd60a", color="#ff595e", life=1.6):
+    a = ease_out_back((lt - t0) / 0.25)
+    if a <= 0.02 or lt - t0 > life: return
+    px = px or 92 * U()
+    f = font(int(px)); tw = f.getlength(word) / S
+    ro = (tw / 2 + 50 * U()) * a; ri = ro * 0.78
+    wob = 0.05 * math.sin(lt * 30)
+    pts = [(x + math.cos(k * math.pi / 8 + wob) * (ro if k % 2 == 0 else ri) * 1.0,
+            y + math.sin(k * math.pi / 8 + wob) * (ro if k % 2 == 0 else ri) * 0.62) for k in range(16)]
+    poly(d, pts, fill, ow=6)
+    text(d, x, y + 4, word, px * a, color, stroke=8 * U())
+
+
+def dizzy(d, cx, cy, r, lt):
+    for k in range(3):
+        a = lt * 5 + k * 2 * math.pi / 3
+        x, y = cx + math.cos(a) * r * 0.75, cy + math.sin(a) * r * 0.22
+        poly(d, star_pts(x, y, 0.16 * r, 0.07 * r, a), "#ffd60a", ow=4)
+
+
+def caption(d, s, lt, t0=0.0, color="white"):
+    if not s or lt < t0: return
+    px = (80 if VERT() else 74) * U()
+    lines = wrap(s, px, W() * (0.88 if VERT() else 0.7))
+    y0 = H() * (0.15 if VERT() else 0.13)
+    for i, l in enumerate(lines):
+        big_word(d, W() / 2, y0 + i * px * 1.15, l, px, color, t0, lt, stroke=11)
+
+
+def small_word(d, x, y, s, lt, t0, t1, color="white", px=None):
+    if not (t0 <= lt < t1): return
+    a = ease_out_back((lt - t0) / 0.2)
+    text(d, x, y - (lt - t0) * 40 * U(), s, (px or 64 * U()) * max(a, 0.3), color, stroke=8 * U())
+
+
+def bump(lt, t0, up=0.18, down=0.32):
+    """0 -> 1 -> 0 hop curve starting at t0."""
+    x = lt - t0
+    if x < 0 or x > up + down: return 0.0
+    return math.sin(math.pi / 2 * x / up) if x < up else math.cos(math.pi / 2 * (x - up) / down)
+
+
+def r_gag(d, b, lt, t):
+    g = b["gag"]
+    if VERT():
+        (bx, by), (px, py) = (W() * 0.3, H() * 0.64), (W() * 0.75, H() * 0.635)
+        rb, rp = 230 * U(), 150 * U()
+    else:
+        (bx, by), (px, py) = cast_pos(b)
+        rb, rp = 175 * U(), 115 * U()
+    head = by - rb * 1.55
+    cap = b.get("caption", ""); after = b.get("after", "")
+    if g == "bonk":
+        hit = 2.3
+        caption(d, cap if lt < 4.6 else after, lt, 0.0 if lt < 4.6 else 4.6)
+        sq = 0.28 * math.exp(-(lt - hit) * 5) * abs(math.cos((lt - hit) * 14)) if lt > hit else 0
+        mood = "happy" if lt < 1.2 else ("surprised" if lt < 4.4 else "excited")
+        bobo(d, bx, by, rb, t, mood=mood, look=0 if lt > hit else -0.2, squash=sq, hop=lt > 4.4,
+             hold="apple" if lt > 5.2 else None)
+        pip(d, px, py, rp, t, mood="excited" if lt > hit + 0.3 else "happy", look=-0.6, flap=lt > hit + 0.3, hop=lt > hit + 0.3)
+        if lt < hit:
+            k = clamp01((lt - 1.2) / (hit - 1.2)) if lt > 1.2 else 0
+            ay = H() * 0.22 + (head - H() * 0.22) * k * k
+            if lt > 0.2: DRAW["apple"](d, bx, ay, 62 * U(), 0, 0)
+        elif lt < 5.2:
+            x = lt - hit
+            ax = bx + x * 260 * U(); ay = head - 260 * U() * math.sin(min(x, 1.0) * math.pi) * (1 if x < 1 else 0) + (0 if x < 1 else 0)
+            ay = min(ay, by + rb * 0.7) if x < 1 else by + rb * 0.7
+            DRAW["apple"](d, min(ax, px - rp * 1.6), ay, 62 * U(), t, 0)
+        if hit < lt < 4.4: dizzy(d, bx, head + rb * 0.15, rb, lt)
+        burst(d, bx, head - 70 * U(), b.get("punch", "BONK!"), lt, hit)
+        small_word(d, px, py - rp * 1.7, "Hee hee!", lt, 3.0, 4.4, "#ffca3a")
+        small_word(d, bx, by - rb * 2.1, "Ha ha ha!", lt, 4.6, 6.4, "#ffca3a", 72 * U())
+    elif g == "sneeze":
+        ach = 2.9; land = 4.6
+        caption(d, cap if lt < land + 0.3 else after, lt, 0.0 if lt < land + 0.3 else land + 0.3)
+        lean = min(1, lt / ach) if lt < ach else max(0, 1 - (lt - ach) * 6)
+        pip(d, px + lean * 25 * U(), py, rp, t, mood="surprised" if lt < land else "excited", look=-0.6,
+            hop=lt > land, flap=lt > land)
+        if lt < ach:
+            ah = "Ah..." if lt < 1.4 else "Ah... ah..."
+            text(d, px, py - rp * 1.8, ah, (58 + 20 * lean) * U(), "white", stroke=8 * U())
+        bobo(d, bx, by, rb, t, mood="happy" if lt < ach else ("surprised" if lt < land + 0.5 else "excited"),
+             hat=lt < ach, hop=lt > land + 0.5, look=0.6)
+        if ach <= lt:
+            for k in range(4):
+                yy = by - rb * 1.75 + (k - 1.5) * 30 * U(); ph = clamp01((lt - ach) * 3 - k * 0.1)
+                x0 = px - rp * 1.0 - ph * (px - bx - rp) * 0.9
+                if 0 < ph < 1:
+                    line(d, [(x0, yy), (x0 - 110 * U(), yy)], fill="white", w=9 * U())
+            burst(d, px, py - rp * 2.3, b.get("punch", "ACHOO!"), lt, ach, life=1.0)
+            k = clamp01((lt - ach) / (land - ach))
+            hx = bx + (px - bx) * k
+            hy0 = by - rb * 0.93; hy1 = py - rp * 0.8
+            hy = hy0 + (hy1 - hy0) * k - math.sin(k * math.pi) * H() * 0.18
+            draw_hat(d, hx, hy, rb * (1 - 0.15 * k), ang=(0 if k >= 1 else k * 4 * math.pi))
+        small_word(d, bx, by - rb * 1.6, "Ha ha!", lt, land + 0.6, 7.5, "#ffca3a", 72 * U())
+    elif g == "peekaboo":
+        boo = 3.6
+        caption(d, cap if lt < boo else after, lt, 0.0 if lt < boo else boo + 0.6)
+        hiding = lt < boo
+        bobo(d, bx, by, rb, t, mood="excited" if not hiding else "happy", hop=not hiding,
+             lift=bump(lt, boo, 0.2, 0.35) * 90 * U())
+        if hiding:
+            rock = math.sin(lt * 4) * 0.05 * rb
+            for s_ in (-1, 1):
+                ell(d, bx + s_ * 0.3 * rb + rock, by - 0.2 * rb, 0.3 * rb, 0.26 * rb, "#ff8c42", ow=5)
+        look = math.sin(lt * 2.2) if hiding else -0.6
+        pip(d, px, py, rp, t, mood="happy" if hiding else ("surprised" if lt < boo + 0.6 else "excited"),
+            look=look, flap=lt > boo + 0.6, hop=lt > boo + 0.6)
+        if hiding and int(lt * 1.6) % 2 == 0:
+            text(d, px, py - rp * 1.7, "?", 90 * U(), "#ffca3a", stroke=8 * U())
+        burst(d, W() / 2, by - rb * 2.75, b.get("punch", "PEEK-A-BOO!"), lt, boo, px=84 * U(), life=1.3)
+        small_word(d, px, py - rp * 1.7, "Hee hee!", lt, boo + 1.3, 6.5, "#ffca3a")
+    elif g == "hiccup":
+        hics = [0.9, 2.0, 3.0, 3.8]; boo = 5.0
+        caption(d, cap if lt < boo + 1.0 else after, lt, 0.0 if lt < boo + 1.0 else boo + 1.0)
+        lift = sum(bump(lt, h) for h in hics) * 110 * U() + bump(lt, boo + 0.1, 0.3, 0.6) * 260 * U()
+        mood = "surprised" if lt < boo + 1.0 else "excited"
+        bobo(d, bx, by, rb, t, mood=mood, hop=lt > boo + 1.0, lift=lift)
+        for h in hics:
+            small_word(d, bx + rb * 1.0, by - rb * 1.7 - 60 * U(), "hic!", lt, h, h + 0.7, "white", 70 * U())
+        pip(d, px - (40 * U() if boo - 0.6 < lt < boo + 0.6 else 0), py, rp, t,
+            mood="happy" if lt < boo - 0.6 else "excited", look=-0.6, hop=lt > boo + 0.6, flap=lt > boo + 0.6)
+        burst(d, px - 40 * U(), py - rp * 2.0, b.get("punch", "BOO!"), lt, boo)
+        small_word(d, bx, by - rb * 2.0, "Ha ha! All gone!", lt, boo + 1.2, 8.0, "#ffca3a", 66 * U())
+    elif g == "bubble":
+        pop_t = 4.8
+        caption(d, cap if lt < pop_t else after, lt, 0.0 if lt < pop_t else pop_t + 0.6)
+        bobo(d, bx, by, rb, t, mood="happy" if lt < pop_t else ("surprised" if lt < pop_t + 0.6 else "excited"),
+             hop=lt > pop_t + 0.6, look=0.6)
+        pip(d, px, py, rp, t, mood="happy" if lt < pop_t else ("surprised" if lt < pop_t + 0.6 else "excited"),
+            look=-0.8, hop=lt > pop_t + 0.6, flap=lt > pop_t + 0.6)
+        mx, my = bx + rb * 0.75, by + rb * 0.05
+        if lt < pop_t:
+            if lt < 3.0:
+                rr = rb * 0.08 + rb * 0.55 * clamp01((lt - 0.5) / 2.5); cx, cy = mx + rr, my - rr * 0.4
+            else:
+                k = ease_in_out((lt - 3.0) / (pop_t - 3.0)); rr = rb * 0.63 * (1 - 0.3 * k)
+                sx0, sy0 = mx + rb * 0.63, my - rb * 0.25
+                cx = sx0 + (px - sx0) * k
+                cy = sy0 + ((py + rp * 0.15) - sy0) * k - math.sin(k * math.pi) * H() * 0.12
+            if lt > 0.5:
+                wob = 1 + 0.04 * math.sin(lt * 9)
+                bb = [P(cx - rr * wob), P(cy - rr / wob), P(cx + rr * wob), P(cy + rr / wob)]
+                d.ellipse(bb, fill="#c6ecff", outline=INK, width=int(P(5)))
+                d.arc([P(cx - rr * 0.82), P(cy - rr * 0.82), P(cx + rr * 0.82), P(cy + rr * 0.82)], 20, 80, fill="#f9a8d4", width=int(P(8)))
+                d.arc([P(cx - rr * 0.72), P(cy - rr * 0.72), P(cx + rr * 0.72), P(cy + rr * 0.72)], 195, 250, fill="white", width=int(P(11)))
+        else:
+            x = lt - pop_t
+            if x < 0.5:
+                for k in range(10):
+                    a = k * math.pi / 5
+                    ell(d, px + math.cos(a) * (60 + x * 400) * U(), py + rp * 0.15 + math.sin(a) * (60 + x * 400) * U(), 9 * U(), 9 * U(), "#7fd7ff", ow=2)
+        burst(d, px, py - rp * 1.9, b.get("punch", "POP!"), lt, pop_t)
+        small_word(d, px, py - rp * 1.8, "Hee hee!", lt, pop_t + 0.8, 7.5, "#ffca3a")
+        small_word(d, bx, by - rb * 1.8, "Ha ha!", lt, pop_t + 1.1, 7.5, "#ffca3a", 72 * U())
+
+
+RENDER["gag"] = r_gag
+
+
+def gag_sfx(add, b, t0, tone_, mtof_, boing_, pop_, bell_):
+    rng = np.random.default_rng(abs(hash(b["gag"])) % 1000)
+
+    def giggle(base, n=6, gap=0.11, amp=0.13):
+        out = np.zeros(int((n * gap + 0.3) * SR))
+        for k in range(n):
+            f = mtof_(base + (2 if k % 2 == 0 else 0)) * (1 - 0.03 * k)
+            tt = np.arange(int(0.09 * SR)) / SR
+            s = np.sin(2 * np.pi * f * tt + 3 * np.sin(2 * np.pi * 28 * tt)) * np.exp(-tt * 28) * amp
+            i = int(k * gap * SR); out[i:i + len(s)] += s
+        return out
+
+    def sweep(f0, f1, dur, amp=0.12):
+        tt = np.arange(int(dur * SR)) / SR
+        ph = 2 * np.pi * np.cumsum(f0 + (f1 - f0) * tt / dur) / SR
+        return np.sin(ph) * amp * np.minimum(1, tt / 0.01) * np.minimum(1, (dur - tt) / 0.05)
+
+    def noise(dur, amp=0.15, decay=8):
+        n = rng.standard_normal(int(dur * SR)); tt = np.arange(len(n)) / SR
+        return n * np.exp(-tt * decay) * amp
+
+    def thud():
+        tt = np.arange(int(0.25 * SR)) / SR
+        ph = 2 * np.pi * np.cumsum(150 * np.exp(-tt * 9) + 50) / SR
+        return np.sin(ph) * np.exp(-tt * 12) * 0.5
+
+    g = b["gag"]
+    if g == "bonk":
+        add(sweep(1800, 500, 1.1, 0.07), t0 + 1.2)
+        add(thud(), t0 + 2.3); add(boing_(), t0 + 2.32, 1.4)
+        for k in range(4): add(bell_(mtof_(96 + k * 2), 0.05, 0.4), t0 + 2.5 + k * 0.35)
+        add(giggle(84), t0 + 3.0); add(giggle(62, 7, 0.13, 0.16), t0 + 4.6)
+    elif g == "sneeze":
+        add(sweep(500, 800, 0.5, 0.08), t0 + 0.6); add(sweep(550, 1000, 0.6, 0.09), t0 + 1.6)
+        add(noise(0.5, 0.25, 6), t0 + 2.9); add(tone_(mtof_(70), 0.3, 8, 0.15), t0 + 2.9)
+        add(sweep(300, 1400, 1.4, 0.05), t0 + 3.0)
+        add(pop_(mtof_(60), 0.3), t0 + 4.6)
+        add(giggle(62, 7, 0.13, 0.16), t0 + 5.1); add(giggle(84), t0 + 5.4)
+    elif g == "peekaboo":
+        for k in range(6): add(tone_(mtof_([67, 71, 67, 74, 67, 71][k]), 0.2, 14, 0.08), t0 + 0.4 + k * 0.5)
+        add(pop_(mtof_(79), 0.35), t0 + 3.6); add(bell_(mtof_(88)), t0 + 3.65)
+        add(giggle(84), t0 + 4.5); add(giggle(62, 6, 0.13, 0.15), t0 + 4.9)
+    elif g == "hiccup":
+        for h in [0.9, 2.0, 3.0, 3.8]:
+            add(sweep(400, 1100, 0.12, 0.18), t0 + h)
+        add(noise(0.35, 0.22, 7), t0 + 5.0); add(tone_(mtof_(50), 0.4, 6, 0.2), t0 + 5.0)
+        add(boing_(), t0 + 5.1, 1.3)
+        add(giggle(62, 7, 0.13, 0.16), t0 + 6.2); add(giggle(84), t0 + 6.5)
+    elif g == "bubble":
+        add(sweep(300, 900, 2.5, 0.05), t0 + 0.5)
+        for k in range(4): add(tone_(mtof_(79 + k * 3), 0.25, 10, 0.05), t0 + 3.0 + k * 0.4)
+        add(pop_(mtof_(84), 0.45), t0 + 4.8); add(noise(0.08, 0.2, 40), t0 + 4.8)
+        add(giggle(84), t0 + 5.6); add(giggle(62, 6, 0.13, 0.15), t0 + 5.9)
 
 if __name__ == "__main__":
     import argparse
