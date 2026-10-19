@@ -437,8 +437,9 @@ def r_count(d, b, lt, t):
             ly = y - s * 1.5 - 26 * U()
             ell(d, x, ly, 34 * U() * sc, 34 * U() * sc, NUM_COLORS[i % 10], ow=4)
             text(d, x, ly + 2, str(i + 1), 42 * U() * sc, "white", stroke=4)
-    if shown:
-        words = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"]
+    done_t = t0 + n * 2 * BEAT + 0.3
+    if shown and lt <= done_t:
+        words =["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"]
         nm = b.get("names", words)[shown - 1] if not b.get("label_fn") else b["label_fn"](shown)
         k = (lt - (t0 + (shown - 1) * 2 * BEAT)) / 0.35
         text(d, w / 2, h * (0.70 if VERT() else 0.9), nm + "!", (96 if VERT() else 84) * U() * (0.6 + 0.4 * ease_out_back(k)), NUM_COLORS[(shown - 1) % 10], stroke=10 * U())
