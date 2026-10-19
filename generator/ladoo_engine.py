@@ -37,6 +37,9 @@ PEOPLE = {
     "anya":  dict(R=80, skin="#c98d5a", hair="#3a2a1e", style="pigtails", top="#ffca3a", bottom="#ffca3a", body=0.8, dress=True, label="Anya"),
     "kabir": dict(R=72, skin="#c68642", hair="#2d2340", style="spiky", top="#57cc04", bottom="#2ec4b6", body=0.62, label="Kabir"),
     "dadi":  dict(R=88, skin="#c98d5a", hair="#d8d4e0", style="grannybun", top="#8b5cf6", bottom="#8b5cf6", body=0.92, dress=True, glasses=True, label="Dadi"),
+    "tara":  dict(R=78, skin="#b97a4a", hair="#2d2340", style="curly", top="#8b5cf6", bottom="#8b5cf6", body=0.74, dress=True, label="Tara"),
+    "amma":  dict(R=92, skin="#a86b3c", hair="#2d2340", style="braid", top="#2ec4b6", bottom="#2ec4b6", body=1.0, dress=True, label="Amma"),
+    "appa":  dict(R=96, skin="#a86b3c", hair="#2d2340", style="short", top="#ff924c", bottom="#3d3a5c", body=1.0, glasses=True, label="Appa"),
     "meera": dict(R=90, skin="#b97a4a", hair="#2d2340", style="ponytail", top="#2ec4b6", bottom="#3d3a5c", body=0.98, label="Meera Didi"),
 }
 GROUND = 0.93
@@ -140,6 +143,15 @@ def _hair_back(d, x, hy, R, c, style):
         for sx in (-1, 1):
             ell(d, x + sx * 1.12 * R, hy + 0.1 * R, 0.3 * R, 0.42 * R, c)
             ell(d, x + sx * 0.98 * R, hy - 0.25 * R, 0.14 * R, 0.14 * R, "#ff595e")
+    elif style == "curly":
+        for k in range(9):
+            a = math.pi * (0.95 + 1.1 * k / 8)
+            ell(d, x + math.cos(a) * 1.0 * R, hy + math.sin(a) * 0.95 * R, 0.3 * R, 0.3 * R, c)
+    elif style == "braid":
+        for k in range(4):
+            ell(d, x + 0.85 * R, hy + 0.5 * R + k * 0.32 * R, 0.17 * R, 0.19 * R, c)
+        ell(d, x - 0.55 * R, hy - 0.85 * R, 0.12 * R, 0.12 * R, "#ffffff", ow=3)
+        ell(d, x - 0.38 * R, hy - 0.95 * R, 0.1 * R, 0.1 * R, "#ffd60a", ow=3)
     elif style == "ponytail":
         rot_ell(d, x + 0.95 * R, hy + 0.15 * R, 0.24 * R, 0.6 * R, -0.35, c)
     if style in ("bun",):
@@ -154,6 +166,9 @@ def _hair_front(d, x, hy, R, c, style):
             bx = x - 0.7 * R + k * 0.35 * R
             poly(d, [(bx - 0.18 * R, hy - 0.75 * R), (bx + 0.05 * R, hy - 1.28 * R), (bx + 0.2 * R, hy - 0.75 * R)], c)
         d.chord([P(x - 1.04 * R), P(hy - 1.06 * R), P(x + 1.04 * R), P(hy + 0.45 * R)], 180, 360, fill=c, outline=None)
+    if style == "curly":
+        for k in range(5):
+            ell(d, x - 0.6 * R + k * 0.3 * R, hy - 0.62 * R, 0.2 * R, 0.17 * R, c, ow=0)
     if style == "pigtails":
         for k in range(4):
             bx = x - 0.5 * R + k * 0.33 * R
@@ -224,9 +239,145 @@ def person(d, name, x, gy, t, mood="happy", act=None, talk=False, look=0.0, scal
 
 
 def character(d, name, x, gy, t, mood="happy", act=None, talk=False, look=0.0, n=3):
+    if name == "mishti":
+        return mishti(d, x, gy, (145 if n == 1 else (128 if n == 2 else 108)) * U() * (1.3 if VERT() else 1.0), t, mood=mood, act=act, look=look, talk=talk)
+    if name == "grumbo":
+        return grumbo(d, x, H() * (0.36 if VERT() else 0.3), 115 * U(), t, mood=mood, act=act, talk=talk)
     if name == "ladoo":
         return ladoo(d, x, gy, (150 if n == 1 else (128 if n == 2 else 100)) * U() * (1.3 if VERT() else 1.0), t, mood=mood, act=act, look=look, collar=EP.get("collar", True), talk=talk)
     return person(d, name, x, gy, t, mood=mood, act=act, talk=talk, look=look)
+
+
+GREY, GREY_DK, WHITE_FUR = "#9aa3b8", "#6b7390", "#fbfbff"
+
+
+def mishti(d, x, gy, s, t, mood="happy", act=None, look=0.0, talk=False):
+    """Mishti the hero cat: grey tabby, white chest, red cape, gold bell (glows on act='glow'). Sitting, front view."""
+    act = act or ""
+    lift = 0.0
+    if act in ("hop", "leap") or mood == "excited":
+        lift = abs(math.sin(t * math.pi / BEAT)) * s * (0.7 if act == "leap" else 0.3)
+    y = gy - lift
+    sleep = act == "sleep"
+    ell(d, x, gy + 2, s * (0.85 - 0.3 * min(lift / s, 1)), s * 0.13, (60, 90, 50), ow=0)
+    # cape
+    flap = math.sin(t * 6) * 0.08 * s
+    poly(d, [(x - 0.45 * s, y - 1.45 * s), (x + 0.45 * s, y - 1.45 * s), (x + 0.85 * s + flap, y - 0.1 * s), (x - 0.85 * s - flap, y - 0.1 * s)], "#e63946")
+    # tail
+    sw = math.sin(t * (5 if act in ("swish", "glow") else 2)) * 0.25
+    pts = [(x + 0.5 * s + 0.6 * s * u + 0.25 * s * math.sin(u * 4 + sw * 3) * u, y - 0.2 * s - 1.3 * s * u) for u in np.linspace(0, 1, 12)]
+    line(d, pts, fill=INK, w=0.24 * s); line(d, pts, fill=GREY, w=0.15 * s)
+    for k in (4, 7, 10):
+        ell(d, pts[k][0], pts[k][1], 0.07 * s, 0.05 * s, GREY_DK, ow=0)
+    # body
+    ell(d, x, y - 0.75 * s, 0.6 * s, 0.8 * s, GREY)
+    for k in range(3):
+        d.arc([P(x - 0.58 * s), P(y - 1.3 * s + k * 0.28 * s), P(x + 0.58 * s), P(y - 0.9 * s + k * 0.28 * s)], 200, 240, fill=GREY_DK, width=int(P(6)))
+        d.arc([P(x - 0.58 * s), P(y - 1.3 * s + k * 0.28 * s), P(x + 0.58 * s), P(y - 0.9 * s + k * 0.28 * s)], 300, 340, fill=GREY_DK, width=int(P(6)))
+    ell(d, x, y - 0.6 * s, 0.34 * s, 0.5 * s, WHITE_FUR, ow=0)
+    for sx in (-1, 1):
+        d.rounded_rectangle([P(x + sx * 0.22 * s - 0.1 * s), P(y - 0.55 * s), P(x + sx * 0.22 * s + 0.1 * s), P(y - 0.06 * s)], radius=int(P(0.09 * s)), fill=GREY, outline=INK, width=int(P(4)))
+        ell(d, x + sx * 0.22 * s, y - 0.06 * s, 0.15 * s, 0.09 * s, WHITE_FUR)
+    # head
+    hy = y - 1.85 * s + (0.3 * s if sleep else 0)
+    for sx in (-1, 1):
+        ear_t = 0.04 * math.sin(t * 3 + sx)
+        poly(d, [(x + sx * 0.85 * s, hy - 0.2 * s), (x + sx * (0.75 + ear_t) * s, hy - 1.05 * s), (x + sx * 0.25 * s, hy - 0.72 * s)], GREY)
+        poly(d, [(x + sx * 0.72 * s, hy - 0.33 * s), (x + sx * 0.68 * s, hy - 0.85 * s), (x + sx * 0.38 * s, hy - 0.66 * s)], "#ffb3c6", ow=0)
+    ell(d, x, hy, 0.95 * s, 0.82 * s, GREY)
+    for k in (-1, 0, 1):
+        line(d, [(x + k * 0.2 * s, hy - 0.8 * s), (x + k * 0.14 * s, hy - 0.5 * s)], fill=GREY_DK, w=0.07 * s)
+    ell(d, x, hy + 0.35 * s, 0.42 * s, 0.3 * s, WHITE_FUR, ow=0)
+    if sleep:
+        for sx in (-1, 1):
+            d.arc([P(x + sx * 0.36 * s - 0.15 * s), P(hy - 0.18 * s), P(x + sx * 0.36 * s + 0.15 * s), P(hy + 0.02 * s)], 20, 160, fill=INK, width=int(P(5)))
+    else:
+        ee.eyes(d, x, hy + 0.08 * s, s, "excited" if mood == "love" else mood, t, look, blink_seed=1.9)
+        if mood not in ("excited", "love"):
+            for sx in (-1, 1):
+                ell(d, x + sx * 0.33 * s, hy - 0.04 * s, 0.035 * s, 0.03 * s, "#8ac926", ow=0)
+    poly(d, [(x - 0.09 * s, hy + 0.22 * s), (x + 0.09 * s, hy + 0.22 * s), (x, hy + 0.32 * s)], "#ff8fab", ow=3)
+    if talk or mood in ("excited", "love") or act in ("hop", "glow"):
+        op = 0.08 * s + (0.05 * s * (0.5 + 0.5 * math.sin(t * 20)) if talk else 0)
+        d.chord([P(x - 0.15 * s), P(hy + 0.3 * s), P(x + 0.15 * s), P(hy + 0.36 * s + op * 2)], 0, 180, fill="#b5223b", outline=INK, width=int(P(3)))
+    else:
+        d.arc([P(x - 0.16 * s), P(hy + 0.26 * s), P(x), P(hy + 0.44 * s)], 20, 160, fill=INK, width=int(P(4)))
+        d.arc([P(x), P(hy + 0.26 * s), P(x + 0.16 * s), P(hy + 0.44 * s)], 20, 160, fill=INK, width=int(P(4)))
+    for sx in (-1, 1):
+        for k in (-1, 0, 1):
+            line(d, [(x + sx * 0.3 * s, hy + 0.32 * s + k * 0.06 * s), (x + sx * 0.95 * s, hy + 0.26 * s + k * 0.13 * s)], fill=INK, w=3)
+    ell(d, x - 0.58 * s, hy + 0.25 * s, 0.11 * s, 0.06 * s, "#ff8fab", ow=0)
+    ell(d, x + 0.58 * s, hy + 0.25 * s, 0.11 * s, 0.06 * s, "#ff8fab", ow=0)
+    # collar + bell
+    d.arc([P(x - 0.55 * s), P(hy + 0.35 * s), P(x + 0.55 * s), P(hy + 0.95 * s)], 30, 150, fill="#e63946", width=int(P(0.11 * s)))
+    bx, by = x, hy + 0.98 * s
+    if act == "glow":
+        for k in range(10):
+            a = k * math.pi / 5 + t * 2
+            r0, r1 = 0.2 * s, (0.42 + 0.1 * math.sin(t * 12)) * s
+            line(d, [(bx + math.cos(a) * r0, by + math.sin(a) * r0), (bx + math.cos(a) * r1, by + math.sin(a) * r1)], fill="#ffd60a", w=7)
+    ell(d, bx, by, 0.13 * s, 0.13 * s, "#ffd60a", ow=3)
+    line(d, [(bx - 0.12 * s, by), (bx + 0.12 * s, by)], w=3)
+    if sleep:
+        for k in range(3):
+            ph = (t * 0.6 + k / 3) % 1
+            text(d, x + 0.9 * s + ph * 0.5 * s, hy - 0.9 * s - ph * 0.9 * s, "z", (30 + 22 * ph) * U(), "white", stroke=5)
+    return (x, hy - 1.0 * s)
+
+
+def grumbo(d, x, y, s, t, mood="grumpy", act=None, talk=False):
+    """Grumbo the grumpy raincloud: floats, never scary. mood 'grumpy' (grey, rain) or 'happy' (white, smiling)."""
+    happy = mood in ("happy", "excited", "love")
+    y += math.sin(t * 1.6) * 10 * U()
+    c = "#ffffff" if happy else "#a3aac0"
+    if not happy:
+        for k in range(6):
+            ph = (t * 1.4 + k / 6) % 1
+            rx = x + (k - 2.5) * 0.32 * s
+            ry = y + 0.5 * s + ph * 1.1 * s
+            ell(d, rx, ry, 0.05 * s, 0.09 * s, "#7fd7ff", ow=2)
+    for dx, dy, r in [(-0.75, 0.1, 0.5), (0.75, 0.1, 0.5), (-0.35, -0.25, 0.62), (0.35, -0.3, 0.66), (0, 0.2, 0.62)]:
+        ell(d, x + dx * s, y + dy * s, r * s, r * s * 0.9, c)
+    for dx, dy, r in [(-0.75, 0.1, 0.46), (0.75, 0.1, 0.46), (-0.35, -0.25, 0.58), (0.35, -0.3, 0.62), (0, 0.2, 0.58)]:
+        ell(d, x + dx * s, y + dy * s, r * s, r * s * 0.9, c, ow=0)
+    ee.eyes(d, x, y + 0.05 * s, s * 0.8, "happy" if happy else "sad", t)
+    if not happy:
+        for sx in (-1, 1):
+            line(d, [(x + sx * 0.42 * s, y - 0.32 * s), (x + sx * 0.12 * s, y - 0.2 * s)], w=7)
+    ee.mouth(d, x, y + 0.2 * s, s * 0.5, "happy" if happy else "sad", talk, t)
+    return (x, y - 0.9 * s)
+
+
+def prop(d, pr, lt, L):
+    """Props drawn on the ground: {"kind": "ball"|"pot"|"vase"|"bush", "x": 0.5, "x2": 0.8 (moves over the beat), "t0", "t1"}."""
+    k = pr["kind"]
+    t0, t1 = pr.get("t0", 0.0), pr.get("t1", L)
+    u = clamp01((lt - t0) / max(t1 - t0, 0.01))
+    x = W() * (pr["x"] + (pr.get("x2", pr["x"]) - pr["x"]) * ease_in_out(u))
+    gy = ground()
+    s = pr.get("s", 1.0) * U()
+    if k == "ball":
+        r = 48 * s
+        y = gy - r - abs(math.sin(u * 9)) * 30 * s * (1 - u) * (1 if "x2" in pr else 0)
+        rot = (x / r) % (2 * math.pi)
+        ell(d, x, y, r, r, "#ffffff", ow=5)
+        for j, c in enumerate(["#ff595e", "#ffca3a", "#1982c4"]):
+            a0 = math.degrees(rot) + j * 120
+            d.pieslice([P(x - r), P(y - r), P(x + r), P(y + r)], a0, a0 + 60, fill=c, outline=INK, width=int(P(3)))
+        ell(d, x, y, r * 0.2, r * 0.2, "#ffffff", ow=3)
+    elif k == "pot":
+        y = gy - 330 * s
+        d.rounded_rectangle([P(x - 90 * s), P(y - 70 * s), P(x + 90 * s), P(y)], radius=int(P(18)), fill="#8d99ae", outline=INK, width=int(P(5)))
+        d.rectangle([P(x - 110 * s), P(y - 78 * s), P(x + 110 * s), P(y - 62 * s)], fill="#6b7390", outline=INK, width=int(P(4)))
+        for j in range(3):
+            ph = (lt * 0.8 + j / 3) % 1
+            sx_ = x + (j - 1) * 45 * s + math.sin(ph * 6) * 10 * s
+            line(d, [(sx_, y - 90 * s - ph * 120 * s), (sx_ + 12 * s, y - 120 * s - ph * 120 * s)], fill="#ffffff", w=10)
+    elif k == "bush":
+        for dx, r in [(-60, 60), (0, 75), (60, 60)]:
+            ell(d, x + dx * s, gy - r * s, r * s, r * s * 0.85, "#57cc04")
+        for j in range(6):
+            ell(d, x + (j - 2.5) * 30 * s, gy - (60 + (j % 2) * 40) * s, 12 * s, 12 * s, "#8b5cf6", ow=3)
 
 
 # ----------------------------------------------------------------- scenes
@@ -290,6 +441,33 @@ def scene_bg(name):
         d.rounded_rectangle([P(bx - 130 * U()), P(by - 30 * U()), P(bx + 130 * U()), P(by)], radius=int(P(8)), fill="#c98d5a", outline=INK, width=int(P(4)))
         for sx in (-1, 1):
             d.rectangle([P(bx + sx * 100 * U() - 8 * U()), P(by), P(bx + sx * 100 * U() + 8 * U()), P(by + 50 * U())], fill="#8a5a2b", outline=INK, width=int(P(3)))
+    elif name == "street":
+        img = ee._grad((110, 200, 255), (220, 245, 255)); d = ImageDraw.Draw(img)
+        for k, (hx, hw, hh, c) in enumerate([(0.0, 0.2, 0.34, "#ffca3a"), (0.22, 0.18, 0.42, "#ff924c"), (0.62, 0.2, 0.38, "#8ac926"), (0.84, 0.18, 0.3, "#f15bb5")]):
+            x0, x1, yb = w * hx, w * (hx + hw), h * 0.66
+            d.rectangle([P(x0), P(yb - h * hh), P(x1), P(yb)], fill=c, outline=INK, width=int(P(5)))
+            poly(d, [(x0 - 10 * U(), yb - h * hh), ((x0 + x1) / 2, yb - h * hh - 80 * U()), (x1 + 10 * U(), yb - h * hh)], "#c1121f")
+            for j in range(2):
+                d.rounded_rectangle([P(x0 + (0.18 + 0.42 * j) * (x1 - x0)), P(yb - h * hh * 0.75), P(x0 + (0.18 + 0.42 * j) * (x1 - x0) + 0.25 * (x1 - x0)), P(yb - h * hh * 0.5)], radius=int(P(8)), fill="#9fdcff", outline=INK, width=int(P(4)))
+        ee._tree(d, w * 0.5, h * 0.52, 110 * U())
+        d.rectangle([0, P(h * 0.66), P(w), P(h * 0.74)], fill="#cfd4e0", outline=INK, width=int(P(4)))
+        d.rectangle([0, P(h * 0.74), P(w), P(h)], fill="#c9b79c", outline=INK, width=int(P(4)))
+        if not VERT():
+            d.rectangle([P(w * 0.62), P(h * 0.66), P(w), P(h * 0.74)], fill="#5c6378", outline=INK, width=int(P(4)))
+            for k in range(6):
+                d.rectangle([P(w * 0.64 + k * 60 * U()), P(h * 0.675), P(w * 0.64 + k * 60 * U() + 34 * U()), P(h * 0.725)], fill="#ffffff")
+    elif name == "kitchen":
+        img = ee._grad((255, 244, 220), (255, 226, 190)); d = ImageDraw.Draw(img)
+        d.rectangle([0, P(h * 0.74), P(w), P(h)], fill="#d9c7a5", outline=INK, width=int(P(4)))
+        cy = h * 0.6
+        d.rectangle([P(w * 0.45), P(cy), P(w), P(h * 0.74)], fill="#c98d5a", outline=INK, width=int(P(5)))
+        d.rectangle([P(w * 0.44), P(cy - 18 * U()), P(w), P(cy)], fill="#f1e3c8", outline=INK, width=int(P(4)))
+        for k in range(4):
+            x0 = w * (0.47 + k * 0.135)
+            d.rounded_rectangle([P(x0), P(cy + 20 * U()), P(x0 + w * 0.11), P(h * 0.72)], radius=int(P(8)), fill="#dba06b", outline=INK, width=int(P(4)))
+        for k in range(3):
+            ell(d, w * (0.12 + k * 0.1), h * 0.18, 34 * U(), 34 * U(), ["#ff595e", "#ffca3a", "#8ac926"][k], ow=4)
+        line(d, [(w * 0.08, h * 0.12), (w * 0.36, h * 0.12)], w=6)
     else:
         img = ee.scene_bg(name).copy()
     _BG[key] = img
@@ -297,7 +475,7 @@ def scene_bg(name):
 
 
 def outdoor(name):
-    return name in ("park", "meadow", "orchard", "beach")
+    return name in ("park", "meadow", "orchard", "beach", "street")
 
 
 # ----------------------------------------------------------------- layout + ui
@@ -320,11 +498,17 @@ def draw_cast(d, b, t, speaker=None, lt=0.0):
     xs = cast_x(cast, b)
     moods, acts = b.get("mood", {}), b.get("act", {})
     tops = {}
+    L_ = beat_len(b)
+    for pr in b.get("props", []):
+        prop(d, pr, lt, L_)
     talking = speaker if lt < len(b.get("text", "")) / TYPE_RATE + 0.2 else None
     for c in cast:
         look = 0.0
         if speaker and c != speaker and speaker in xs:
             look = 0.6 if xs[speaker] > xs[c] else -0.6
+        if c == "grumbo":
+            tops[c] = character(d, c, xs[c], ground(), t, mood=moods.get(c, "grumpy"), act=acts.get(c), talk=(c == talking), n=len(cast))
+            continue
         tops[c] = character(d, c, xs[c], ground(), t, mood=moods.get(c, "happy"), act=acts.get(c), talk=(c == talking and not b.get("think")), look=look, n=len(cast))
     return xs, tops
 
@@ -398,6 +582,7 @@ def beat_len(b):
     if k == "ask": return 8.2
     if k == "title": return 5.0
     if k == "moment": return 5.5
+    if k == "rescue": return 4.5
     if k == "lesson": return 6.5
     if k == "bye": return 6.0
     return 3.0
@@ -409,9 +594,12 @@ def r_title(d, b, lt, t):
     ty = h * (0.2 if VERT() else 0.18)
     series = EP.get("series", "Ladoo Comes Home")
     if a > 0.02:
-        text(d, w / 2, ty + (1 - a) * 80, series, (110 if VERT() else 120) * U() * max(a, 0.3), COAT, stroke=14 * U())
+        text(d, w / 2, ty + (1 - a) * 80, series, (110 if VERT() else 120) * U() * max(a, 0.3), EP.get("color", COAT), stroke=14 * U())
     big_word(d, w / 2, ty + 135 * U(), b.get("text", ""), 62 * U(), "white", 0.8, lt, stroke=10)
-    ladoo(d, w / 2, ground(), 110 * U(), t, mood="excited", act="hop", collar=EP.get("collar", True))
+    if EP.get("hero", "ladoo") == "mishti":
+        mishti(d, w / 2, ground(), 120 * U(), t, mood="excited", act="hop")
+    else:
+        ladoo(d, w / 2, ground(), 110 * U(), t, mood="excited", act="hop", collar=EP.get("collar", True))
     floating_hearts(d, w / 2, ground() - 300 * U(), lt, n=8, spread=1.6)
 
 
@@ -419,11 +607,24 @@ def r_say(d, b, lt, t):
     who = b["who"]
     xs, tops = draw_cast(d, b, t, speaker=who, lt=lt)
     shown = int(lt * TYPE_RATE)
-    top_all = min(v[1] for v in tops.values()) if tops else H() * 0.6
+    gt = [v[1] for c, v in tops.items() if c != "grumbo"]
+    top_all = min(gt) if gt else H() * 0.6
+    if who == "grumbo":
+        top_all = tops["grumbo"][1]
     sx, sy = tops.get(who, (W() / 2, top_all))
     px = 54 * U()
     yb = top_all - 34 * U()
-    if b.get("think"):
+    if who == "grumbo":
+        gx = xs["grumbo"]; gcy = H() * (0.36 if VERT() else 0.3)
+        side = -1 if gx > W() / 2 else 1
+        mw = W() * (0.8 if VERT() else 0.42)
+        bw = min(mw, max(font(int(px)).getlength(l) / S for l in wrap(b["text"], px, mw)) + 70 * U())
+        cx = gx + side * (190 * U() + bw / 2)
+        if VERT():
+            ee.bubble(d, W() / 2, gcy - 120 * U(), b["text"], px, shown, (gx, gcy - 100 * U()), maxw=mw)
+        else:
+            ee.bubble(d, cx, gcy + 70 * U(), b["text"], px, shown, (gx + side * 140 * U(), gcy + 10 * U()), maxw=mw)
+    elif b.get("think"):
         think_bubble(d, sx, yb, b["text"], px, shown, (sx, sy - 8 * U()))
     else:
         ee.bubble(d, sx, yb, b["text"], px, shown, (sx, sy - 6 * U()), maxw=W() * (0.8 if VERT() else 0.5))
@@ -434,6 +635,16 @@ def r_say(d, b, lt, t):
 def r_narrate(d, b, lt, t):
     draw_cast(d, b, t)
     caption_box(d, b["text"], lt)
+
+
+def r_rescue(d, b, lt, t):
+    """The hero moment: optional props move, hero leaps, a big burst word ('STOP!', 'SAVED!')."""
+    xs, tops = draw_cast(d, b, t)
+    hero = EP.get("hero", "mishti")
+    hx, hy = tops.get(hero, (W() / 2, H() * 0.5))
+    ee.burst(d, hx, hy - 110 * U(), b.get("burst", "STOP!"), lt, b.get("at", 0.6), px=100 * U(), life=b.get("life", 2.4))
+    if b.get("text"):
+        big_word(d, W() / 2, H() * (0.13 if not VERT() else 0.16), b["text"], 76 * U(), "white", 0.2, lt, stroke=11)
 
 
 def r_ask(d, b, lt, t):
@@ -459,7 +670,7 @@ def r_ask(d, b, lt, t):
 
 def r_moment(d, b, lt, t):
     xs, tops = draw_cast(d, b, t)
-    tgt = b.get("hearts", "ladoo")
+    tgt = b.get("hearts", EP.get("hero", "ladoo"))
     floating_hearts(d, xs.get(tgt, W() / 2), ground() - 140 * U(), lt, n=12, spread=1.4)
     if b.get("text"):
         px = (80 if VERT() else 84) * U()
@@ -482,7 +693,7 @@ def r_lesson(d, b, lt, t):
             text(d, w / 2, y0 + 30 * U() + 45 * U() + i * 90 * U(), l, 74 * U() * max(a, 0.3), "white", stroke=8 * U())
         heart(d, w / 2 - bw / 2 * a - 10 * U(), y0 + 10 * U(), 34 * U())
         heart(d, w / 2 + bw / 2 * a + 10 * U(), y0 + 10 * U(), 34 * U())
-    floating_hearts(d, xs.get("ladoo", w / 2), ground() - 140 * U(), lt, n=8)
+    floating_hearts(d, xs.get(EP.get("hero", "ladoo"), w / 2), ground() - 140 * U(), lt, n=8)
 
 
 def r_grownup(d, b, lt, t):
@@ -491,7 +702,7 @@ def r_grownup(d, b, lt, t):
 
 
 def r_bye(d, b, lt, t):
-    b = dict(b, act={**{c: "wave" for c in b.get("cast", []) if c != "ladoo"}, "ladoo": "hop", **b.get("act", {})})
+    b = dict(b, act={**{c: "wave" for c in b.get("cast", []) if c in PEOPLE}, "ladoo": "hop", "mishti": "hop", **b.get("act", {})})
     draw_cast(d, b, t)
     w, h = W(), H()
     px = (88 if VERT() else 104) * U()
@@ -506,7 +717,7 @@ def r_bye(d, b, lt, t):
     confetti(d, lt)
 
 
-RENDER = {"title": r_title, "say": r_say, "narrate": r_narrate, "ask": r_ask, "moment": r_moment,
+RENDER = {"rescue": r_rescue, "title": r_title, "say": r_say, "narrate": r_narrate, "ask": r_ask, "moment": r_moment,
           "lesson": r_lesson, "grownup": r_grownup, "bye": r_bye}
 
 
@@ -530,7 +741,7 @@ def camera_crop(lt, L, b):
     elif b["type"] == "moment":
         z = 1.0 + 0.07 * ease_in_out(lt / max(L, 0.1))
         xs = cast_x(b.get("cast", []), b)
-        fx = xs.get(b.get("hearts", "ladoo"), W() / 2) * 0.4 + W() / 2 * 0.6
+        fx = xs.get(b.get("hearts", EP.get("hero", "ladoo")), W() / 2) * 0.4 + W() / 2 * 0.6
         fy = H() * 0.65
     else:
         z = 1.0 + 0.02 * (0.5 + 0.5 * math.sin(lt * 0.6))
@@ -571,7 +782,8 @@ def render_frame(i):
 
 # ----------------------------------------------------------------- audio
 VOICE = {"papa": [52, 55, 57, 59], "mumma": [64, 67, 69, 71], "anya": [72, 74, 76, 79], "kabir": [76, 79, 81, 83],
-         "dadi": [62, 64, 65, 67], "meera": [65, 67, 69, 72], "ladoo": [79, 81, 84]}
+         "dadi": [62, 64, 65, 67], "meera": [65, 67, 69, 72], "ladoo": [79, 81, 84],
+         "tara": [74, 76, 79, 81], "amma": [64, 66, 69, 71], "appa": [50, 53, 55, 57], "mishti": [84, 86, 88], "grumbo": [40, 43, 45]}
 
 
 def make_audio(path, tl, total, intro, seed=5):
@@ -592,6 +804,12 @@ def make_audio(path, tl, total, intro, seed=5):
         ph = 2 * np.pi * np.cumsum(f) / SR
         sig = np.sign(np.sin(ph)) * 0.35 + np.sin(ph) + 0.25 * rng.standard_normal(len(tt)) * np.exp(-tt * 30)
         return sig * np.exp(-tt * 13) * amp * np.minimum(1, tt / 0.005)
+
+    def meow(amp=0.16):
+        tt = np.arange(int(0.45 * SR)) / SR
+        f = 520 + 380 * np.sin(np.pi * tt / 0.45) ** 0.8 - 150 * tt
+        sig = np.sin(2 * np.pi * np.cumsum(f) / SR) + 0.35 * np.sin(4 * np.pi * np.cumsum(f) / SR)
+        return sig * np.sin(np.pi * tt / 0.45) * amp
 
     def whimper():
         tt = np.arange(int(0.5 * SR)) / SR
@@ -645,11 +863,15 @@ def make_audio(path, tl, total, intro, seed=5):
         k = b["type"]
         if k in ("say", "grownup"):
             who = b["who"]
-            if who == "ladoo" and not b.get("think"):
+            if who == "mishti" and not b.get("think"):
+                n = max(1, b["text"].lower().count("meow"))
+                for j in range(min(n, 3)):
+                    add(meow(), t0 + 0.15 + j * 0.5)
+            elif who == "ladoo" and not b.get("think"):
                 n = max(1, b["text"].lower().count("woof"))
                 for j in range(min(n, 4)):
                     add(woof(1.0 + 0.05 * j), t0 + 0.15 + j * 0.32)
-            elif who == "ladoo":
+            elif who in ("ladoo", "mishti"):
                 add(whimper() if "sad" in str(b.get("mood", {}).get("ladoo", "")) else bell(mtof(88), 0.08), t0 + 0.1)
                 r = random.Random(hash(b["text"]) & 0xffff); tt = t0 + 0.4
                 while tt < t0 + len(b["text"]) / TYPE_RATE:
@@ -666,14 +888,24 @@ def make_audio(path, tl, total, intro, seed=5):
             for s_ in range(3):
                 add(tone(1400, 0.08, 40, 0.16, (1, 0, 0)), t0 + 2.2 + s_)
             add(bell(mtof(88)), t0 + 5.2); add(chime_up(), t0 + 5.3)
+        elif k == "rescue":
+            at = b.get("at", 0.6)
+            tt = np.arange(int(0.6 * SR)) / SR
+            add(np.sin(2 * np.pi * np.cumsum(300 + 900 * tt / 0.6) / SR) * 0.08 * np.exp(-tt * 2), t0 + max(0, at - 0.5))
+            add(bell(mtof(91), 0.2, 1.4), t0 + at); add(meow(0.2), t0 + at + 0.1); add(chime_up(), t0 + at + 1.2)
         elif k == "moment":
             add(chime_up(72, 0.09, 0.1), t0 + 0.3)
+            if b.get("act", {}).get("mishti"):
+                add(meow(0.12), t0 + 1.2)
             if b.get("act", {}).get("ladoo") in ("lick", "wag", "hop"):
                 add(woof(1.15, 0.22), t0 + 1.2)
         elif k == "lesson":
             add(chime_up(), t0 + 0.5); add(bell(mtof(84)), t0 + 1.2)
         elif k == "title":
-            add(woof(1.1, 0.25), t0 + 0.6); add(woof(1.15, 0.25), t0 + 0.9)
+            if EP.get("hero", "ladoo") == "mishti":
+                add(meow(0.22), t0 + 0.6)
+            else:
+                add(woof(1.1, 0.25), t0 + 0.6); add(woof(1.15, 0.25), t0 + 0.9)
         elif k == "bye":
             for m in [48, 60, 64, 67, 72]:
                 add(tone(mtof(m), 2.5, 1.2, 0.09), t1 - 2.6)
@@ -700,13 +932,16 @@ def thumbnail(ep, path):
     ee.CFG.update(W=1920, H=1080)
     th = getattr(ep, "THUMB", {})
     img = scene_bg(th.get("scene", getattr(ep, "SCENE", "home"))).copy(); d = ImageDraw.Draw(img)
-    text(d, 1000, 215, th.get("big", "LADOO COMES HOME"), th.get("px", 140), COAT, stroke=16)
+    text(d, 1000, 215, th.get("big", "LADOO COMES HOME"), th.get("px", 140), getattr(ep, "COLOR", COAT), stroke=16)
     if th.get("small"): text(d, 1000, 360, th["small"], 96, "white", stroke=12)
     cast = th.get("cast", ["anya", "kabir"])
     xs = {c: x for c, x in zip(cast, [430, 1490, 260, 1660])}
     for c in cast:
         person(d, c, xs[c], 1010, 0.2, mood="excited", act="wave" if c == cast[0] else None)
-    ladoo(d, 960, 1010, 150, 0.1, mood="love", act="wag", collar=th.get("collar", True))
+    if getattr(ep, "HERO", "ladoo") == "mishti":
+        mishti(d, 960, 1010, 160, 0.1, mood="excited", act="glow")
+    else:
+        ladoo(d, 960, 1010, 150, 0.1, mood="love", act="wag", collar=th.get("collar", True))
     for k, (hx, hy, s) in enumerate([(740, 560, 50), (1190, 540, 58), (1270, 680, 38), (680, 700, 34)]):
         heart(d, hx, hy, s)
     ee.badge(d)
@@ -737,7 +972,7 @@ def build(ep_path, out, beats=None, vertical=False, intro=True, stills=None):
     ee.CFG.update(W=1080, H=1920) if vertical else ee.CFG.update(W=1920, H=1080)
     tl, total = timeline(beats if beats is not None else ep.BEATS, intro=intro)
     EP.update(tl=tl, total=total, intro=intro, scene=getattr(ep, "SCENE", "home"),
-              series=getattr(ep, "SERIES", "Ladoo Comes Home"), collar=getattr(ep, "COLLAR", True), collar_default=getattr(ep, "COLLAR", True))
+              series=getattr(ep, "SERIES", "Ladoo Comes Home"), collar=getattr(ep, "COLLAR", True), collar_default=getattr(ep, "COLLAR", True), hero=getattr(ep, "HERO", "ladoo"), color=getattr(ep, "COLOR", COAT))
     if stills is not None:
         times = stills if isinstance(stills, list) else [(s[0] + s[1]) / 2 + 0.4 for s in tl]
         ims = [Image.frombytes("RGB", (W(), H()), render_frame(int(tt * FPS))) for tt in times]
