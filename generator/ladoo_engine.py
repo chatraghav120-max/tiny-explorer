@@ -349,7 +349,7 @@ def grumbo(d, x, y, s, t, mood="grumpy", act=None, talk=False):
 
 
 def prop(d, pr, lt, L):
-    """Props drawn on the ground: {"kind": "ball"|"pot"|"vase"|"bush", "x": 0.5, "x2": 0.8 (moves over the beat), "t0", "t1"}."""
+    """Props drawn on the ground: {"kind": "ball"|"pot"|"bush"|"bed"|"blanket"|"clock", "front": True draws over the cast, "x": 0.5, "x2": 0.8 (moves over the beat), "t0", "t1"}."""
     k = pr["kind"]
     t0, t1 = pr.get("t0", 0.0), pr.get("t1", L)
     u = clamp01((lt - t0) / max(t1 - t0, 0.01))
@@ -373,6 +373,38 @@ def prop(d, pr, lt, L):
             ph = (lt * 0.8 + j / 3) % 1
             sx_ = x + (j - 1) * 45 * s + math.sin(ph * 6) * 10 * s
             line(d, [(sx_, y - 90 * s - ph * 120 * s), (sx_ + 12 * s, y - 120 * s - ph * 120 * s)], fill="#ffffff", w=10)
+    elif k == "bed":
+        # round cushion bed; Ladoo sits in it
+        rw = 210 * s
+        ell(d, x, gy - 40 * s, rw, 62 * s, pr.get("color", "#5bc0eb"))
+        ell(d, x, gy - 52 * s, rw * 0.78, 36 * s, "#b9e6fb", ow=3)
+    elif k == "blanket":
+        # soft checked blanket; with "front": True it is tucked over Ladoo's lap
+        bw_, bh_ = pr.get("w", 230) * s, pr.get("h", 95) * s
+        y1 = gy + 4 * s
+        y0 = y1 - bh_
+        d.rounded_rectangle([P(x - bw_ / 2), P(y0), P(x + bw_ / 2), P(y1)], radius=int(P(34 * s)), fill="#ffd166", outline=INK, width=int(P(5)))
+        for j in range(1, 4):
+            xx = x - bw_ / 2 + bw_ * j / 4
+            line(d, [(xx, y0 + 8 * s), (xx, y1 - 8 * s)], fill="#ff8fab", w=7)
+        line(d, [(x - bw_ / 2 + 10 * s, (y0 + y1) / 2), (x + bw_ / 2 - 10 * s, (y0 + y1) / 2)], fill="#ff8fab", w=7)
+        heart(d, x, y0 + bh_ * 0.3, 16 * s, "#e63946")
+    elif k == "clock":
+        # little alarm clock with a moving second hand (tick, tock)
+        r = 46 * s
+        cx, cy = x, gy - r - 14 * s
+        for sx in (-1, 1):
+            line(d, [(cx + sx * 0.5 * r, cy + 0.7 * r), (cx + sx * 0.75 * r, gy)], w=7)
+            ell(d, cx + sx * 0.62 * r, cy - 0.92 * r, 0.32 * r, 0.24 * r, "#ff595e", ow=4)
+        ell(d, cx, cy, r, r, "#ff595e", ow=5)
+        ell(d, cx, cy, r * 0.78, r * 0.78, "#ffffff", ow=3)
+        for j in range(4):
+            a = j * math.pi / 2
+            ell(d, cx + math.cos(a) * r * 0.6, cy + math.sin(a) * r * 0.6, 4 * s, 4 * s, INK, ow=0)
+        line(d, [(cx, cy), (cx, cy - r * 0.45)], w=6)
+        a = math.floor(lt) * (2 * math.pi / 12) - math.pi / 2
+        line(d, [(cx, cy), (cx + math.cos(a) * r * 0.62, cy + math.sin(a) * r * 0.62)], fill="#e63946", w=4)
+        ell(d, cx, cy, 6 * s, 6 * s, INK, ow=0)
     elif k == "bush":
         for dx, r in [(-60, 60), (0, 75), (60, 60)]:
             ell(d, x + dx * s, gy - r * s, r * s, r * s * 0.85, "#57cc04")
@@ -500,7 +532,8 @@ def draw_cast(d, b, t, speaker=None, lt=0.0):
     tops = {}
     L_ = beat_len(b)
     for pr in b.get("props", []):
-        prop(d, pr, lt, L_)
+        if not pr.get("front"):
+            prop(d, pr, lt, L_)
     talking = speaker if lt < len(b.get("text", "")) / TYPE_RATE + 0.2 else None
     for c in cast:
         look = 0.0
@@ -510,6 +543,9 @@ def draw_cast(d, b, t, speaker=None, lt=0.0):
             tops[c] = character(d, c, xs[c], ground(), t, mood=moods.get(c, "grumpy"), act=acts.get(c), talk=(c == talking), n=len(cast))
             continue
         tops[c] = character(d, c, xs[c], ground(), t, mood=moods.get(c, "happy"), act=acts.get(c), talk=(c == talking and not b.get("think")), look=look, n=len(cast))
+    for pr in b.get("props", []):
+        if pr.get("front"):
+            prop(d, pr, lt, L_)
     return xs, tops
 
 
@@ -909,6 +945,10 @@ def make_audio(path, tl, total, intro, seed=5):
         elif k == "bye":
             for m in [48, 60, 64, 67, 72]:
                 add(tone(mtof(m), 2.5, 1.2, 0.09), t1 - 2.6)
+        if any(pr.get("kind") == "clock" for pr in b.get("props", [])):
+            tt = t0 + 0.5
+            while tt < t1 - 0.3:
+                add(tone(2600 if int(tt * 2) % 2 else 2000, 0.03, 60, 0.05, (1, 0, 0)), tt); tt += 1.0
         if b.get("sad"):
             out = np.zeros(int(1.4 * SR))
             for j, m in enumerate([67, 65, 64, 60]):
