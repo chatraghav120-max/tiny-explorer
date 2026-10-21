@@ -153,8 +153,11 @@ def eyes(d, cx, cy, r, mood, t, look=0.0, blink_seed=0.0):
         ell(d, ex, ey, 0.21 * r * big, 0.26 * r * big, "white")
         pr = 0.08 if mood == "surprised" else 0.115
         dy = 0.06 * r if mood == "sad" else 0.03 * r
-        ell(d, ex + look * 0.07 * r, ey + dy, pr * r, pr * 1.15 * r, INK, ow=0)
-        ell(d, ex + look * 0.07 * r + 0.035 * r, ey + dy - 0.04 * r, 0.04 * r, 0.04 * r, "white", ow=0)
+        lk = look
+        if mood == "cross":  # cross-eyed: both pupils look in and down at the nose
+            lk, dy = -s_ * 1.35, 0.08 * r
+        ell(d, ex + lk * 0.07 * r, ey + dy, pr * r, pr * 1.15 * r, INK, ow=0)
+        ell(d, ex + lk * 0.07 * r + 0.035 * r, ey + dy - 0.04 * r, 0.04 * r, 0.04 * r, "white", ow=0)
         if mood == "sad":
             line(d, [(ex - s_ * 0.2 * r, ey - 0.36 * r), (ex + s_ * 0.05 * r, ey - 0.27 * r)], w=max(4, r * 0.05))
 
@@ -829,8 +832,9 @@ def build(ep_path, out_mp4, beats=None, vertical=False, intro=True, stills=None)
 
 
 # ----------------------------------------------------------------- funny gags (no lesson, just giggles)
-# Beat: {"type": "gag", "gag": "bonk"|"sneeze"|"peekaboo"|"hiccup"|"bubble", "caption": "...", "punch": "...", "after": "..."}
-GAG_DUR = {"bonk": 7.0, "sneeze": 8.0, "peekaboo": 7.0, "hiccup": 8.5, "bubble": 7.5}
+# Beat: {"type": "gag", "gag": "bonk"|"sneeze"|"peekaboo"|"hiccup"|"bubble"|"ladybug", "caption": "...", "punch": "...", "after": "..."}
+# "ladybug" also takes "mid" (caption while Bobo is cross-eyed).
+GAG_DUR = {"bonk": 7.0, "sneeze": 8.0, "peekaboo": 7.0, "hiccup": 8.5, "bubble": 7.5, "ladybug": 9.0}
 
 
 def burst(d, x, y, word, lt, t0, px=None, fill="#ffd60a", color="#ff595e", life=1.6):
@@ -903,7 +907,7 @@ def r_gag(d, b, lt, t):
             ay = min(ay, by + rb * 0.7) if x < 1 else by + rb * 0.7
             DRAW["apple"](d, min(ax, px - rp * 1.6), ay, 62 * U(), t, 0)
         if hit < lt < 4.4: dizzy(d, bx, head + rb * 0.15, rb, lt)
-        burst(d, bx, head - 70 * U(), b.get("punch", "BONK!"), lt, hit)
+        burst(d, bx - 70 * U(), head - 70 * U(), b.get("punch", "BONK!"), lt, hit)
         small_word(d, px, py - rp * 1.7, "Hee hee!", lt, 3.0, 4.4, "#ffca3a")
         small_word(d, bx, by - rb * 2.1, "Ha ha ha!", lt, 4.6, 6.4, "#ffca3a", 72 * U())
     elif g == "sneeze":
@@ -988,8 +992,57 @@ def r_gag(d, b, lt, t):
                     a = k * math.pi / 5
                     ell(d, px + math.cos(a) * (60 + x * 400) * U(), py + rp * 0.15 + math.sin(a) * (60 + x * 400) * U(), 9 * U(), 9 * U(), "#7fd7ff", ow=2)
         burst(d, px, py - rp * 1.9, b.get("punch", "POP!"), lt, pop_t)
-        small_word(d, px, py - rp * 1.8, "Hee hee!", lt, pop_t + 0.8, 7.5, "#ffca3a")
+        small_word(d, px, py - rp * 1.8, "Hee hee!", lt, pop_t + 1.65, 7.5, "#ffca3a")
         small_word(d, bx, by - rb * 1.8, "Ha ha!", lt, pop_t + 1.1, 7.5, "#ffca3a", 72 * U())
+    elif g == "ladybug":
+        land1, hop2, land2, leave = 2.6, 5.0, 5.8, 7.4
+        if lt < land1: caption(d, cap, lt, 0.0)
+        elif lt < land2: caption(d, b.get("mid", "Bobo goes cross-eyed!"), lt, land1)
+        else: caption(d, after, lt, land2)
+        nb = (bx, by - 0.02 * rb); s_l = 0.2 * rb
+        npp = (px, py + 0.12 * rp)
+        # ladybug position
+        if lt < land1:
+            k = ease_in_out((lt - 0.2) / (land1 - 0.2)); s0 = (W() * 0.88, H() * 0.38)
+            lx = s0[0] + (nb[0] - s0[0]) * k + math.sin(lt * 6.5) * 90 * U() * (1 - k)
+            ly = s0[1] + (nb[1] - s0[1]) * k + math.cos(lt * 5.0) * 60 * U() * (1 - k)
+            flying = True
+        elif lt < hop2:
+            lx, ly = nb; flying = False
+        elif lt < land2:
+            k = ease_in_out((lt - hop2) / (land2 - hop2))
+            lx = nb[0] + (npp[0] - nb[0]) * k; ly = nb[1] + (npp[1] - nb[1]) * k - math.sin(k * math.pi) * H() * 0.1
+            flying = True
+        elif lt < leave:
+            lx, ly = npp; flying = False
+        else:
+            k = clamp01((lt - leave) / 1.4)
+            lx = npp[0] + (W() * 1.15 - npp[0]) * k + math.sin(lt * 7) * 40 * U()
+            ly = npp[1] + (H() * 0.4 - npp[1]) * k
+            flying = True
+        bmood = "happy" if lt < land1 else ("cross" if lt < hop2 else ("surprised" if lt < land2 else "excited"))
+        blook = max(-1.0, min(1.0, (lx - bx) / (rb * 2.5))) if lt < land1 else 0.6
+        bobo(d, bx, by, rb, t, mood=bmood, look=blook, hop=lt > leave)
+        pmood = ("happy" if lt < land1 else ("excited" if lt < hop2 else ("surprised" if lt < land2 else
+                 ("cross" if lt < leave else "excited"))))
+        phop = (land1 + 0.3 < lt < hop2) or lt > leave
+        pip(d, px, py, rp, t, mood=pmood, look=-0.6, hop=phop, flap=phop)
+        if lt > 0.2 and lx < W() + 80 * U():
+            if flying:
+                fl = abs(math.sin(lt * 40))
+                for s_ in (-1, 1):
+                    ell(d, lx + s_ * 0.75 * s_l, ly - 0.25 * s_l, 0.45 * s_l, (0.2 + 0.4 * fl) * s_l, "#e6f7ff", ow=3)
+            DRAW["ladybug"](d, lx, ly, s_l, 0, 0)
+        if land1 < lt < hop2:
+            for k in range(2):  # little wobble lines beside the eyes
+                a = lt * 6 + k * math.pi
+                small_x = bx + (1 if k else -1) * rb * 0.62
+                line(d, [(small_x, by - 0.45 * rb + math.sin(a) * 8 * U()), (small_x + (1 if k else -1) * 28 * U(), by - 0.55 * rb)], fill=INK, w=5 * U())
+        burst(d, bx, head - 70 * U(), b.get("punch", "BOOP!"), lt, land1)
+        burst(d, px, py - rp * 2.35, b.get("punch2", "BOOP!"), lt, land2, px=80 * U(), life=1.3)
+        small_word(d, px, py - rp * 1.7, "Hee hee!", lt, land1 + 0.6, hop2, "#ffca3a")
+        small_word(d, bx, by - rb * 2.1, "Ha ha ha!", lt, land2 + 0.4, 8.2, "#ffca3a", 72 * U())
+        small_word(d, px, py - rp * 1.7, "Bye, ladybug!", lt, leave + 0.3, 8.9, "white", 56 * U())
 
 
 RENDER["gag"] = r_gag
@@ -1048,6 +1101,20 @@ def gag_sfx(add, b, t0, tone_, mtof_, boing_, pop_, bell_):
         for k in range(4): add(tone_(mtof_(79 + k * 3), 0.25, 10, 0.05), t0 + 3.0 + k * 0.4)
         add(pop_(mtof_(84), 0.45), t0 + 4.8); add(noise(0.08, 0.2, 40), t0 + 4.8)
         add(giggle(84), t0 + 5.6); add(giggle(62, 6, 0.13, 0.15), t0 + 5.9)
+    elif g == "ladybug":
+        def buzz(dur, amp=0.05):
+            tt = np.arange(int(dur * SR)) / SR
+            ph = 2 * np.pi * np.cumsum(240 + 50 * np.sin(2 * np.pi * 5 * tt)) / SR
+            env = np.minimum(1, tt / 0.15) * np.minimum(1, (dur - tt) / 0.25)
+            return (np.sin(ph) + 0.3 * np.sin(2 * ph)) * env * amp
+        add(buzz(2.3), t0 + 0.3)
+        add(sweep(700, 320, 0.22, 0.2), t0 + 2.6); add(pop_(mtof_(72), 0.3), t0 + 2.6)
+        add(sweep(400, 750, 0.45, 0.06), t0 + 3.0); add(sweep(750, 400, 0.45, 0.06), t0 + 3.5)
+        add(giggle(84), t0 + 3.3)
+        add(buzz(0.8), t0 + 5.0)
+        add(sweep(900, 450, 0.2, 0.2), t0 + 5.8); add(pop_(mtof_(79), 0.3), t0 + 5.8)
+        add(giggle(62, 7, 0.13, 0.16), t0 + 6.2)
+        add(buzz(1.4, 0.04), t0 + 7.4); add(giggle(84), t0 + 7.7)
 
 if __name__ == "__main__":
     import argparse
